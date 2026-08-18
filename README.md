@@ -16,6 +16,9 @@ Everything you need to find weak Google Business Profiles, pitch them on WhatsAp
 | `import_leads.py` | Auto-fill the tracker from a CSV of prospects (verified). Includes a `scrape_maps()` stub that activates with `SERP_API_KEY`. |
 | `leads_input.csv` | Sample CSV of 5 SA businesses (format reference for `import_leads.py`). |
 | `sitecraft_maps_pipeline_n8n.json` | n8n workflow: Webhook → SerpApi Maps → score red flags → filter ≥2 → append to Google Sheet → send WhatsApp opener. |
+| `apps_script_auto_fill.gs` | Google Apps Script that auto-fills the tracker from an "Import" sheet — runs inside Google Sheets, no Python. |
+| `TWILIO_WHATSAPP_SETUP.md` | Copy-paste Twilio WhatsApp n8n node config + E.164 phone normaliser. |
+| `CNAME` + `CUSTOM_DOMAIN_SETUP.md` | Custom-domain files for `leads.sitecraftsa.co.za` (DNS + GitHub config). |
 | `build_guide_pdf.py`, `build_tracker_xlsx.py` | Regenerate the PDF / XLSX from scratch. |
 
 ## 🚀 Quick start (manual)
