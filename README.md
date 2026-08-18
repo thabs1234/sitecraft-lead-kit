@@ -30,11 +30,13 @@ Everything you need to find weak Google Business Profiles, pitch them on WhatsAp
 6. Bulk-import a list: drop rows into `leads_input.csv`, then `python import_leads.py`.
 
 ## ⚡ Automate it (n8n)
-1. Import `sitecraft_maps_pipeline_n8n.json` into n8n.
+1. Import `sitecraft_maps_pipeline_n8n.json` into n8n — see **`DEPLOY_N8N.md`** for the one-click "Import from URL" steps.
 2. Set `SERP_API_KEY` (SerpApi Google Maps engine) in n8n env.
 3. Add your Google Sheets + Twilio WhatsApp credentials; replace the GSheet ID.
 4. Trigger the webhook with `{"trade":"plumber","town":"Polokwane"}` — leads flow into the sheet and get a WA opener automatically.
 5. Point the landing page's `window.SITECRAFT_N8N_WEBHOOK` at the webhook so form leads also flow in.
+6. WhatsApp node config (sender, body, E.164 normaliser): **`TWILIO_WHATSAPP_SETUP.md`**.
+7. Google Sheets auto-fill without Python: **`apps_script_auto_fill.gs`**.
 
 ## 🌐 Live landing page
 Hosted at: `https://thabs1234.github.io/sitecraft-lead-kit/`
