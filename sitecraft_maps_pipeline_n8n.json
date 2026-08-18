@@ -1,0 +1,90 @@
+{
+  "name": "SiteCraft SA — Maps Lead Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sitecraft-lead-pipeline",
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook (trigger)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "sitecraft-lead-pipeline"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {"name": "engine", "value": "google_maps"},
+              {"name": "q", "value": "={{ $json.trade }} in {{ $json.town }}"},
+              {"name": "hl", "value": "en"},
+              {"name": "api_key", "value": "={{ $env.SERP_API_KEY }}"}
+            ]
+          }
+        }
+      },
+      "name": "SerpApi — Google Maps",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const rows = (items[0].json.local_results || []).map(r => {\n  const rf = [];\n  if (!r.website) rf.push('no website');\n  if (r.rating === undefined || r.rating < 4.0) rf.push('low rating');\n  if (r.user_ratings_total === undefined || r.user_ratings_total < 20) rf.push('under 20 reviews');\n  if (!r.thumbnail || !r.photos) rf.push('under 5 photos');\n  if (r.business_status === 'UNCLAIMED' || r.claimed === false) rf.push('claim status');\n  if (!r.current_opening_hours) rf.push('missing hours');\n  if (!r.description) rf.push('weak description');\n  return {\n    business: r.name || '',\n    trade: $('Webhook (trigger)').item.json.trade,\n    town: $('Webhook (trigger)').item.json.town,\n    contact: r.phone || (r.website ? r.website : ''),\n    red_flags: rf.join(';'),\n    outreach: '', replied: '', meeting: '', closed: '', setup: '', monthly: ''\n  };\n});\nreturn rows.map(r => ({ json: r }));"
+      },
+      "name": "Score red flags",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const rows = items.filter(i => (i.json.red_flags || '').split(';').filter(Boolean).length >= 2);\nreturn rows.map(i => ({ json: i.json }));"
+      },
+      "name": "Filter (>=2 red flags)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetName": "Leads",
+        "documentId": "REPLACE_WITH_GOOGLE_SHEET_ID",
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        }
+      },
+      "name": "Append to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [1200, 300],
+      "credentials": { "googleSheetsOAuth2Api": "your-gsheet-cred" }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "to": "={{ $json.contact }}",
+        "type": "WhatsApp",
+        "body": "Hi {{ $json.business }}, I'm Thabang from SiteCraft SA. I noticed your Google listing for {{ $json.trade }} in {{ $json.town }} isn't fully set up yet — that's free visibility you're missing. I set these up properly (claimed profile + simple site) for R1,500 once-off + R450/month. Can I send a free 2-min look at what your listing could be?"
+      },
+      "name": "Send WhatsApp opener",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1440, 300],
+      "credentials": { "twilioApi": "your-twilio-cred" }
+    }
+  ],
+  "connections": {
+    "Webhook (trigger)": { "main": [[{ "node": "SerpApi — Google Maps", "type": "main", "index": 0 }]] },
+    "SerpApi — Google Maps": { "main": [[{ "node": "Score red flags", "type": "main", "index": 0 }]] },
+    "Score red flags": { "main": [[{ "node": "Filter (>=2 red flags)", "type": "main", "index": 0 }]] },
+    "Filter (>=2 red flags)": { "main": [[{ "node": "Append to Google Sheet", "type": "main", "index": 0 }]] },
+    "Append to Google Sheet": { "main": [[{ "node": "Send WhatsApp opener", "type": "main", "index": 0 }]] }
+  }
+}
